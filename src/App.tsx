@@ -1,18 +1,47 @@
-import { useState } from "react";
+import axios from "axios";
+import { useEffect, useState } from "react";
+import { BoardItem } from "./board-item";
+import { Board } from "./types";
+
+const url = "https://api.ticketing.kir-dev.hu/boards";
 
 function App() {
-  const [count, setCount] = useState(0);
-  const onIncrement = () => setCount((prev) => prev + 1);
+  const [inputValue, setInputValue] = useState("");
+  const [boards, setBoards] = useState<Board[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const onAdd = () => {
+    setInputValue("");
+    axios.post(url, {
+      title: inputValue
+    }).then(() => {
+      getBoards();
+    });
+  }
+
+  const getBoards = () => {
+    setIsLoading(true);
+    axios.get<Board[]>(url).then((res) => {
+      setBoards(res.data);
+      setIsLoading(false);
+    });
+  };
+
+  useEffect(() => {
+    getBoards();
+  }, []);
+
   return (
-    <main className="flex items-center justify-center h-screen bg-slate-100">
-      <div className="bg-white p-10 rounded-md shadow-lg flex flex-col items-center gap-5">
-        <h1 className="font-bold">React Gyakorlat</h1>
-        <button
-          className="bg-blue-500 text-white font-bold p-5 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-opacity-50 transition-all duration-300 ease-in-out"
-          onClick={onIncrement}
-        >
-          {count}++
-        </button>
+    <main className="flex flex-col items-center justify-center h-screen bg-slate-100">
+      <div>
+        <input className="border" value={inputValue} onChange={(e) => setInputValue(e.target.value)} />
+        <button className="border" onClick={onAdd}>Add</button>
+      </div>
+      {isLoading && <p>Loading...</p>}
+      <div className="overflow-auto max-h-60">
+        {boards.map((board) => {
+          return <BoardItem key={board.id} board={board} onSave={getBoards}/> 
+        })}
       </div>
     </main>
   );
